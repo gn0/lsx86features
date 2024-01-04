@@ -6,7 +6,21 @@ Requires the following packages on Debian/Ubuntu:
 - `binutils`
 - `perl`
 
-Example usage:
+## Examples
+
+List all known instruction set extensions that are used by a compiled binary:
+
+```
+$ perl lsx86features.pl some_binary | cut -f1 | sort | uniq
+UNKNOWN
+avx
+avx2
+mmx
+sse
+sse2
+```
+
+List instructions in a compiled binary:
 
 ```
 $ perl lsx86features.pl some_binary | sort -r | head -25
