@@ -16,6 +16,44 @@ open(
 ) or die $!;
 
 my %sets = (
+    # TODO Add sse2.
+    "sse" => [
+        qw(movss movaps movups movlps movhps movlhps movhlps movmskps
+           addss subss mulss divss rcpss sqrtss maxss minss rsqrtss
+           addps subps mulps divps rcpps sqrtps maxps minps rsqrtps
+           cmpss comiss ucomiss cmpps shufps unpckhps unpcklps cvtsi2ss
+           cvtss2si cvttss2si cvtpi2ps cvtps2pi cvttps2pi andps orps
+           xorps andnps pmulhuw psadbw pavgb pavgw pmaxub pminub pmaxsw
+           pminsw pextrw pinsrw pmovmskb pshufw ldmxcsr stmxcsr movntq
+           movntps maskmovq prefetch0 prefetch1 prefetch2 prefetchnta
+           sfence)
+    ],
+    "sse3" => [
+        qw(addsubpd addsubps haddpd haddps hsubpd hsubps lddqu movddup
+           movshdup movsldup fisttp monitor mwait)
+    ],
+    "ssse3" => [
+        qw(psignb psignw psignd pabsb pabsw pabsd palignr pshufb
+           pmulhrsw pmaddubsw phsubw phsubd phsubsw phaddw phaddd
+           phaddsw)
+    ],
+    "sse4" => [
+        qw(mpsadbw phminposuw pmuldq pmulld dpps dppd blendps blendpd
+           blendvps blendvpd pblendvb pblendw pminsb pmaxsb pminuw
+           pmaxuw pminud pmaxud pminsd pmaxsd roundps roundss roundpd
+           roundsd insertps pinsrb pinsrd/​pinsrq extractps pextrb
+           pextrd/pextrq pmovsxbw pmovzxbw pmovsxbd pmovzxbd pmovsxbq
+           pmovzxbq pmovsxwd pmovzxwd pmovsxwq pmovzxwq pmovsxdq
+           pmovzxdq ptest pcmpeqq packusdw movntdqa)
+    ],
+    # String and text new instructions.
+    "sse4sttni" => [
+        qw(crc32 pcmpestri pcmpestrm pcmpistri pcmpistrm pcmpgtq)
+    ],
+    # AMD-specific.
+    "sse4a" => [
+        qw(extrq ​insertq movntsd ​movntss)
+    ],
     "avx" => [
         qw(vbroadcastss vbroadcastsd vbroadcastf128
            vinsertf128
