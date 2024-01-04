@@ -213,13 +213,10 @@ while (my $line = <$objdump_output>) {
 }
 
 for my $instruction (keys %instructions) {
-    my $instruction_set = find_set($instruction);
+    my $instruction_set = find_set($instruction) // "UNKNOWN";
 
-    if (defined $instruction_set) {
-        print "${instruction_set}\t";
-    } else {
-        print "UNKNOWN\t";
-    }
-
-    print "${instructions{$instruction}}\t${instruction}\n";
+    print
+        "${instruction_set}\t",
+        "${instructions{$instruction}}\t",
+        "${instruction}\n";
 }
