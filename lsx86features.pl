@@ -12,7 +12,7 @@ my $filename = $ARGV[0];
 open(
     my $objdump_output,
     "-|",
-    "objdump --no-show-raw-insn --no-addresses -d ${filename}"
+    "objdump --no-show-raw-insn -d ${filename}"
 ) or die $!;
 
 my %sets = (
@@ -219,7 +219,7 @@ sub find_set {
 }
 
 while (my $line = <$objdump_output>) {
-    if ($line !~ /^\t(\w+)/) {
+    if ($line !~ /^\s+[0-9a-f]+:\t(\w+)/) {
         next;
     }
 
