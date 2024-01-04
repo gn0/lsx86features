@@ -16,7 +16,6 @@ open(
 ) or die $!;
 
 my %sets = (
-    # TODO Add sse2.
     "sse" => [
         qw(movss movaps movups movlps movhps movlhps movhlps movmskps
            addss subss mulss divss rcpss sqrtss maxss minss rsqrtss
@@ -27,6 +26,17 @@ my %sets = (
            pminsw pextrw pinsrw pmovmskb pshufw ldmxcsr stmxcsr movntq
            movntps maskmovq prefetch0 prefetch1 prefetch2 prefetchnta
            sfence)
+    ],
+    "sse2" => [
+        qw(movapd movhpd movlpd movmskpd movsd movupd addpd addsd divpd
+           divsd maxpd maxsd minpd minsd mulpd mulsd sqrtpd sqrtsd subpd
+           subsd andnpd andpd orpd xorpd cmppd cmpsd comisd ucomisd
+           shufpd unpckhpd unpcklpd cvtdq2pd cvtpd2dq cvtpd2pi cvtpd2ps
+           cvtpi2pd cvtps2pd cvtsd2si cvtsd2ss cvtsi2sd cvtss2sd
+           cvttpd2dq cvttpd2pi cvttsd2si cvtdq2ps cvtps2dq cvttps2dq
+           movdq2q movdqa movdqu movq2dq paddq pmuludq pshufd pshufhw
+           pshuflw pslldq psrldq psubq punpckhqdq punpcklqdq clflush
+           lfence maskmovdqu mfence movntdq movnti movntpd pause)
     ],
     "sse3" => [
         qw(addsubpd addsubps haddpd haddps hsubpd hsubps lddqu movddup
