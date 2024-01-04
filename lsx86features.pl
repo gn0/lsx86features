@@ -41,7 +41,7 @@ my %sets = (
         qw(mpsadbw phminposuw pmuldq pmulld dpps dppd blendps blendpd
            blendvps blendvpd pblendvb pblendw pminsb pmaxsb pminuw
            pmaxuw pminud pmaxud pminsd pmaxsd roundps roundss roundpd
-           roundsd insertps pinsrb pinsrd/​pinsrq extractps pextrb
+           roundsd insertps pinsrb pinsrd pinsrq extractps pextrb
            pextrd/pextrq pmovsxbw pmovzxbw pmovsxbd pmovzxbd pmovsxbq
            pmovzxbq pmovsxwd pmovzxwd pmovsxwq pmovzxwq pmovsxdq
            pmovzxdq ptest pcmpeqq packusdw movntdqa)
@@ -52,7 +52,7 @@ my %sets = (
     ],
     # AMD-specific.
     "sse4a" => [
-        qw(extrq ​insertq movntsd ​movntss)
+        qw(extrq insertq movntsd movntss)
     ],
     "avx" => [
         qw(vbroadcastss vbroadcastsd vbroadcastf128
