@@ -15,7 +15,9 @@ open(
     "objdump --no-show-raw-insn -d ${filename}"
 ) or die $!;
 
-my %sets = (
+# Hash that maps features to instructions.
+#
+my %instructions = (
     "mmx" => [
         qw(movd movq packssdw packsswb packuswb punpckhbw punpckhdq
            punpckhwd punpcklbw punpckldq punpcklwd paddb paddd paddsb
@@ -84,7 +86,7 @@ my %sets = (
            vzeroupper)
     ],
     "avx2" => [
-        qw(vbroadcastss vbroadcastsd vpbroadcastb vpbroadcastw
+        qw(vpbroadcastb vpbroadcastw
            vpbroadcastd vpbroadcastq vbroadcasti128 vinserti128
            vextracti128 vgatherdpd vgatherqpd vgatherdps vgatherqps
            vpgatherdd vpgatherdq vpgatherqd vpgatherqq vpmaskmovd
@@ -204,16 +206,23 @@ my %sets = (
     ],
 );
 
-sub find_set {
-    my ($instruction) = @_;
+# Hash that maps instructions to features.
+#
+my %features = ();
 
-    for my $instruction_set (keys %sets) {
-        if (any { $_ eq $instruction } @{$sets{$instruction_set}}) {
-            return $instruction_set;
+for my $feature (keys %instructions) {
+    for my $instruction (@{$instructions{$feature}}) {
+        if (exists $features{$instruction}) {
+            # We expect no instruction to be mapped to multiple
+            # features.
+            #
+            die "Instruction '${instruction}' is associated with ",
+                "both '${features{$instruction}}' ",
+                "and '${feature}'.";
         }
-    }
 
-    return undef;
+        $features{$instruction} = $feature;
+    }
 }
 
 my %counters = ();
@@ -231,10 +240,10 @@ while (my $line = <$objdump_output>) {
 }
 
 for my $instruction (keys %counters) {
-    my $instruction_set = find_set($instruction) // "UNKNOWN";
+    my $feature = $features{$instruction} // "UNKNOWN";
 
     print
-        "${instruction_set}\t",
+        "${feature}\t",
         "${counters{$instruction}}\t",
         "${instruction}\n";
 }
