@@ -16,6 +16,14 @@ open(
 ) or die $!;
 
 my %sets = (
+    "mmx" => [
+        qw(movd movq packssdw packsswb packuswb punpckhbw punpckhdq
+           punpckhwd punpcklbw punpckldq punpcklwd paddb paddd paddsb
+           paddsw paddusb paddusw paddw pmaddwd pmulhw pmullw psubb
+           psubd psubsb psubsw psubusb psubusw psubw pcmpeqb pcmpeqd
+           pcmpeqw pcmpgtb pcmpgtd pcmpgtw pand pandn por pxor pslld
+           psllq psllw psrad psraw psrld psrlq psrlw emms)
+    ],
     "sse" => [
         qw(movss movaps movups movlps movhps movlhps movhlps movmskps
            addss subss mulss divss rcpss sqrtss maxss minss rsqrtss
