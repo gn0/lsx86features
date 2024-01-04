@@ -204,8 +204,6 @@ my %sets = (
     ],
 );
 
-my %instructions = ();
-
 sub find_set {
     my ($instruction) = @_;
 
@@ -218,23 +216,25 @@ sub find_set {
     return undef;
 }
 
+my %counters = ();
+
 while (my $line = <$objdump_output>) {
     if ($line !~ /^\s+[0-9a-f]+:\t(\w+)/) {
         next;
     }
 
-    if (not exists $instructions{$1}) {
-        $instructions{$1} = 1;
+    if (not exists $counters{$1}) {
+        $counters{$1} = 1;
     } else {
-        $instructions{$1} += 1;
+        $counters{$1} += 1;
     }
 }
 
-for my $instruction (keys %instructions) {
+for my $instruction (keys %counters) {
     my $instruction_set = find_set($instruction) // "UNKNOWN";
 
     print
         "${instruction_set}\t",
-        "${instructions{$instruction}}\t",
+        "${counters{$instruction}}\t",
         "${instruction}\n";
 }
