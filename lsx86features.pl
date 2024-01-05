@@ -1,18 +1,32 @@
 use strict;
 use warnings;
+use Getopt::Long qw(GetOptions);
 use List::Util qw(any);
 
-if ($#ARGV != 0) {
-    die "Error: Must specify exactly one argument.\n\n",
-      "Usage: perl lsx86features.pl <binary_filename>\n";
+Getopt::Long::Configure("bundling", "require_order");
+
+my $symbol_mode = 0;
+my $filename = undef;
+
+my $opt_result = GetOptions(
+    "symbols-by-feature|s" => \$symbol_mode,
+);
+
+if ($#ARGV == 0) {
+    $filename = $ARGV[0];
+} else {
+    print STDERR "Error: Must specify a filename.\n";
 }
 
-my $filename = $ARGV[0];
+unless ($opt_result and defined $filename) {
+    die "Usage: lsx86features [-s|--symbols-by-feature] ",
+        "<binary_filename>\n";
+}
 
 open(
     my $objdump_output,
     "-|",
-    "objdump --no-show-raw-insn -d ${filename}"
+    "objdump --no-show-raw-insn --demangle --disassemble ${filename}"
 ) or die $!;
 
 # Hash that maps features to instructions.
@@ -225,25 +239,68 @@ for my $feature (keys %instructions) {
     }
 }
 
-my %counters = ();
+if ($symbol_mode) {
+    my %symbols = ();
+    my $current_symbol = undef;
 
-while (my $line = <$objdump_output>) {
-    if ($line !~ /^\s+[0-9a-f]+:\t(\w+)/) {
-        next;
+    while (my $line = <$objdump_output>) {
+        if ($line =~ /^[0-9a-f]+ <(.+)>:$/) {
+            # Beginning of a function.
+            #
+
+            $current_symbol = $1;
+        } elsif ($line =~ /^\s+[0-9a-f]+:\t(\w+)/) {
+            # Machine instruction.
+            #
+
+            my $instruction = $1;
+
+            # Record the use of the feature within the current function.
+            #
+            if (defined $current_symbol) {
+                my $feature = $features{$instruction} // next;
+
+                if (not exists $symbols{$feature}{$current_symbol}) {
+                    $symbols{$feature}{$current_symbol} = 1;
+                } else {
+                    $symbols{$feature}{$current_symbol} += 1;
+                }
+            }
+        }
     }
 
-    if (not exists $counters{$1}) {
-        $counters{$1} = 1;
-    } else {
-        $counters{$1} += 1;
+    for my $feature (sort keys %symbols) {
+        print "Functions that use the ${feature} extension set:\n";
+
+        for my $symbol (sort keys %{$symbols{$feature}}) {
+            print "- ${symbol}\n";
+        }
+
+        print "\n";
     }
-}
+} else {
+    my %counters = ();
 
-for my $instruction (keys %counters) {
-    my $feature = $features{$instruction} // "UNKNOWN";
+    while (my $line = <$objdump_output>) {
+        if ($line =~ /^\s+[0-9a-f]+:\t(\w+)/) {
+            my $instruction = $1;
 
-    print
-        "${feature}\t",
-        "${counters{$instruction}}\t",
-        "${instruction}\n";
+            # Increment the instruction counter.
+            #
+            if (not exists $counters{$instruction}) {
+                $counters{$instruction} = 1;
+            } else {
+                $counters{$instruction} += 1;
+            }
+        }
+    }
+
+    for my $instruction (sort keys %counters) {
+        my $feature = $features{$instruction} // "UNKNOWN";
+
+        print
+            "${feature}\t",
+            "${counters{$instruction}}\t",
+            "${instruction}\n";
+    }
 }
