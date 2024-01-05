@@ -8,6 +8,42 @@ Requires the following packages on Debian/Ubuntu:
 
 ## Examples
 
+List the functions that use specific instruction set extensions:
+
+```
+$ perl lsx86features.pl -s /usr/bin/gawk
+Functions that use the mmx extension set:
+- err@@Base
+- err@@Base-0x5ade0
+- error@@Base
+- getopt_long_only@@Base
+- re_compile_fastmap@@Base
+- re_match_2@@Base
+- re_set_registers@@Base
+- regcomp@@Base
+- regerror@@Base
+- regfree@@Base
+- xrealloc@@Base
+
+Functions that use the sse extension set:
+- err@@Base
+- err@@Base-0x5ade0
+- error@@Base
+- getopt_long_only@@Base
+- regerror@@Base
+- regfree@@Base
+- xrealloc@@Base
+
+Functions that use the sse2 extension set:
+- err@@Base
+- err@@Base-0x5ade0
+- error@@Base
+- getopt_long_only@@Base
+- re_match_2@@Base
+- regfree@@Base
+- xrealloc@@Base
+```
+
 List all known instruction set extensions that are used by a compiled binary:
 
 ```
