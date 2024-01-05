@@ -1,17 +1,13 @@
 
-# `lsx86features`: list x86 features used by a compiled binary
+# `lsx86features`: list x86 extension sets used by a compiled binary
 
-Requires the following packages on Debian/Ubuntu:
+This program is useful for checking whether your compiled binaries make use of certain vector instructions that are not commonly available but your CPU supports.
 
-- `binutils`
-- `perl`
-
-## Examples
-
-List the functions that use specific instruction set extensions:
+For example, your CPU might support the [AVX-512](https://en.wikipedia.org/wiki/AVX-512) vector extension set.
+If you want to know whether functions in your hot path use this extension set, you can check with the following command and confirm that it does not:
 
 ```
-$ perl lsx86features.pl -s /usr/bin/gawk
+$ lsx86features -s your_binary
 Functions that use the mmx extension set:
 - err@@Base
 - err@@Base-0x5ade0
@@ -44,10 +40,33 @@ Functions that use the sse2 extension set:
 - xrealloc@@Base
 ```
 
+## Installation
+
+`lsx86features` requires the following packages on Debian/Ubuntu:
+
+- `binutils`
+- `perl`
+
+To install these, run
+
+```
+$ sudo apt install perl binutils
+```
+
+To install `lsx86features` in your user-specific `bin` directory, run
+
+```
+$ git clone https://codeberg.org/gnyeki/lsx86features
+$ cd lsx86features
+$ make install
+```
+
+## More examples
+
 List all known instruction set extensions that are used by a compiled binary:
 
 ```
-$ perl lsx86features.pl some_binary | cut -f1 | sort | uniq
+$ lsx86features your_binary | cut -f1 | sort | uniq
 UNKNOWN
 avx
 avx2
@@ -59,7 +78,7 @@ sse2
 List instructions in a compiled binary:
 
 ```
-$ perl lsx86features.pl some_binary | sort -r | head -25
+$ lsx86features your_binary | sort -r | head -25
 sse	924	movaps
 sse	39	xorps
 sse	2	movlps
