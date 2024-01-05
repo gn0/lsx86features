@@ -3,7 +3,23 @@
 
 This program is useful for checking whether your compiled binaries make use of certain vector instructions that are not commonly available but your CPU supports.
 
-For example, your CPU might support the [AVX-512](https://en.wikipedia.org/wiki/AVX-512) vector extension set.
+For example, suppose that your CPU supports the [AVX-512](https://en.wikipedia.org/wiki/AVX-512) vector extension set:
+
+```
+$ lscpu | grep ^Flags | tr ' ' '\n' | grep avx512
+avx512f
+avx512dq
+avx512ifma
+avx512cd
+avx512bw
+avx512vl
+avx512vbmi
+avx512_vbmi2
+avx512_vnni
+avx512_bitalg
+avx512_vpopcntdq
+```
+
 If you want to know whether functions in your hot path use this extension set, you can check with the following command and confirm that it does not:
 
 ```
