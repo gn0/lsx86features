@@ -28,7 +28,8 @@ unless ($opt_result and defined $filename) {
 open(
     my $objdump_output,
     "-|",
-    "objdump --no-show-raw-insn --demangle --disassemble ${filename}"
+    "objdump --no-show-raw-insn --demangle --disassemble "
+    . "--disassembler-options=intel ${filename}"
 ) or die $!;
 
 # Hash that maps features to instructions.
