@@ -92,61 +92,41 @@ my %instructions = (
         qw(extrq insertq movntsd movntss)
     ],
     "avx" => [
-        qw(vbroadcastss vbroadcastsd vbroadcastf128
-           vinsertf128
-           vextractf128
-           vmaskmovps vmaskmovpd
-           vpermilps vpermilpd
-           vperm2f128
-           vtestps vtestpd
-           vzeroall
-           vzeroupper)
+        qw(vbroadcastss vbroadcastsd vbroadcastf128 vinsertf128
+           vextractf128 vmaskmovps vmaskmovpd vpermilps vpermilpd
+           vperm2f128 vtestps vtestpd vzeroall vzeroupper)
     ],
     "avx2" => [
-        qw(vpbroadcastb vpbroadcastw
-           vpbroadcastd vpbroadcastq vbroadcasti128 vinserti128
-           vextracti128 vgatherdpd vgatherqpd vgatherdps vgatherqps
-           vpgatherdd vpgatherdq vpgatherqd vpgatherqq vpmaskmovd
-           vpmaskmovq vpermps vpermd vpermpd vpermq vperm2i128 vpblendd
-           vpsllvd vpsllvq vpsrlvd vpsrlvq vpsravd)
+        qw(vpbroadcastb vpbroadcastw vpbroadcastd vpbroadcastq
+           vbroadcasti128 vinserti128 vextracti128 vgatherdpd vgatherqpd
+           vgatherdps vgatherqps vpgatherdd vpgatherdq vpgatherqd
+           vpgatherqq vpmaskmovd vpmaskmovq vpermps vpermd vpermpd
+           vpermq vperm2i128 vpblendd vpsllvd vpsllvq vpsrlvd vpsrlvq
+           vpsravd)
     ],
     "avx512f" => [
         qw(vpmovqd vpmovsqd vpmovusqd vpmovqw vpmovsqw vpmovusqw vpmovqb
            vpmovsqb vpmovusqb vpmovdw vpmovsdw vpmovusdw vpmovdb
-           vpmovsdb vpmovusdb
-           vcvtps2udq vcvtpd2udq vcvttps2udq vcvttpd2udq
-           vcvtss2usi vcvtsd2usi vcvttss2usi vcvttsd2usi
-           vcvtudq2ps vcvtudq2pd
-           vcvtusi2ps vcvtusi2pd
-           vcvtusi2sd vcvtusi2ss
-           vcvtqq2pd vcvtqq2ps
-           vpabsq
-           vpmaxsq vpmaxuq
-           vpminsq vpminuq
-           vprold vprolvd vprolq vprolvq vprord vprorvd vprorq vprorvq
-           vpscatterdd vpscatterdq vpscatterqd vpscatterqq
+           vpmovsdb vpmovusdb vcvtps2udq vcvtpd2udq vcvttps2udq
+           vcvttpd2udq vcvtss2usi vcvtsd2usi vcvttss2usi vcvttsd2usi
+           vcvtudq2ps vcvtudq2pd vcvtusi2ps vcvtusi2pd vcvtusi2sd
+           vcvtusi2ss vcvtqq2pd vcvtqq2ps vpabsq vpmaxsq vpmaxuq vpminsq
+           vpminuq vprold vprolvd vprolq vprolvq vprord vprorvd vprorq
+           vprorvq vpscatterdd vpscatterdq vpscatterqd vpscatterqq
            vscatterdps vscatterdpd vscatterqps vscatterqpd)
     ],
     # Doubleword and quadword.
     "avx512dq" => [
         qw(vcvtps2qq vcvtpd2qq vcvtps2uqq vcvtpd2uqq vcvttps2qq
-           vcvttpd2qq
-           vcvttps2uqq vcvttpd2uqq vcvtuqq2ps vcvtuqq2pd
-           vfpclassps vfpclasspd
-           vfpclassss vfpclasssd
-           vrangeps vrangepd
-           vrangess vrangesd
-           vreduceps vreducepd
-           vreducess vreducesd
-           vpmovm2d vpmovm2q
-           vpmovd2m vpmovq2m
-           vpmullq)
+           vcvttpd2qq vcvttps2uqq vcvttpd2uqq vcvtuqq2ps vcvtuqq2pd
+           vfpclassps vfpclasspd vfpclassss vfpclasssd vrangeps vrangepd
+           vrangess vrangesd vreduceps vreducepd vreducess vreducesd
+           vpmovm2d vpmovm2q vpmovd2m vpmovq2m vpmullq)
     ],
     # Byte and word.
     "avx512bw" => [
-        qw(vpmovwb vpmovswb vpmovuswb
-           vpmovm2b vpmovm2w
-           vpmovb2m vpmovw2m)
+        qw(vpmovwb vpmovswb vpmovuswb vpmovm2b vpmovm2w vpmovb2m
+           vpmovw2m)
     ],
     # Conflict detection.
     "avx512cd" => [
