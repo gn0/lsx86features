@@ -21,6 +21,7 @@ install:
 		|| (echo "No objdump installation found."; exit 1)
 	[ "$(INSTALL_DIR)" != "NOT_FOUND" ] \
 		|| (echo "No user-specific bin directory in PATH."; exit 1)
+	mkdir -p $(INSTALL_DIR)
 	cp lsx86features.pl $(INSTALL_DIR)/lsx86features
 	chmod +x $(INSTALL_DIR)/lsx86features
 
