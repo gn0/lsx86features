@@ -72,7 +72,7 @@ $ sudo apt install perl binutils
 To install `lsx86features` in your user-specific `bin` directory, run
 
 ```
-$ git clone https://codeberg.org/gnyeki/lsx86features
+$ git clone https://github.com/gn0/lsx86features
 $ cd lsx86features
 $ make install
 ```
