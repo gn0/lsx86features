@@ -22,7 +22,7 @@ avx512_bitalg
 avx512_vpopcntdq
 ```
 
-If you want to know whether functions in your hot path use this extension set, you can check with the following command and confirm that it does not:
+If you want to know whether functions in your hot path use this extension set, you can check and confirm with the following command:
 
 ```
 $ lsx86features -si -F 'avx*' demo-asm/demo
