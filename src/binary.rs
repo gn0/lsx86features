@@ -1,10 +1,12 @@
-use anyhow::{Context, anyhow};
-use goblin::{Object, elf};
+use anyhow::{anyhow, Context};
+use goblin::{elf, Object};
 use iced_x86::{
-    CpuidFeature, Decoder, DecoderOptions, Instruction, Mnemonic
+    CpuidFeature, Decoder, DecoderOptions, Instruction, Mnemonic,
 };
 use std::cmp::Reverse;
-use std::collections::{BTreeMap, BTreeSet, BinaryHeap, HashMap, HashSet};
+use std::collections::{
+    BTreeMap, BTreeSet, BinaryHeap, HashMap, HashSet,
+};
 use std::path::Path;
 
 #[derive(Debug)]
@@ -28,56 +30,69 @@ impl Binary {
         Self::from_elf(&elf, &data)
     }
 
-    pub fn from_elf(elf: &elf::Elf, data: &[u8]) -> anyhow::Result<Self>
-    {
+    pub fn from_elf(
+        elf: &elf::Elf,
+        data: &[u8],
+    ) -> anyhow::Result<Self> {
         let bitness = match elf.header.e_machine {
             elf::header::EM_386 => 32,
             elf::header::EM_X86_64 => 64,
-            _ => return Err(anyhow!(
-                "Unknown instruction set architecture: {}",
-                elf.header.e_machine
-            )),
+            _ => {
+                return Err(anyhow!(
+                    "Unknown instruction set architecture: {}",
+                    elf.header.e_machine
+                ))
+            }
         };
 
         // The elf(5) man page lists the sections contained in a binary.
         // The `.text` section contains the executable instructions of
         // the program.
-        let Some(text_hdr) = elf.section_headers.iter().find(|&section| {
-            elf.shdr_strtab.get_at(section.sh_name) == Some(".text")
-        }) else {
+        let Some(text_hdr) =
+            elf.section_headers.iter().find(|&section| {
+                elf.shdr_strtab.get_at(section.sh_name) == Some(".text")
+            })
+        else {
             return Err(anyhow!(
                 "Binary does not contain a '.text' section"
             ));
         };
 
         let text_begin = usize::try_from(text_hdr.sh_offset)
-            .with_context(|| format!(
-                "The '.text' section has offset {} which is \
+            .with_context(|| {
+                format!(
+                    "The '.text' section has offset {} which is \
                  greater than usize::MAX on this platform",
-                text_hdr.sh_offset
-            ))?;
+                    text_hdr.sh_offset
+                )
+            })?;
 
-        let text_end = text_begin + usize::try_from(text_hdr.sh_size)
-            .with_context(|| format!(
-                "The '.text' section has size {} which is greater \
+        let text_end = text_begin
+            + usize::try_from(text_hdr.sh_size).with_context(|| {
+                format!(
+                    "The '.text' section has size {} which is greater \
                  than usize::MAX on this platform",
-                text_hdr.sh_size
-            ))?;
+                    text_hdr.sh_size
+                )
+            })?;
 
         if text_end >= data.len() {
             return Err(anyhow!(
                 "Invalid offset + size: {} which is greater than the \
                  binary size, {}",
-                text_end, data.len()
+                text_end,
+                data.len()
             ));
         }
 
         let text_begin_virtual = usize::try_from(text_hdr.sh_addr)
-            .with_context(|| format!(
-                "The '.text' section has virtual address {} which \
+            .with_context(|| {
+                format!(
+                    "The '.text' section has virtual address {} which \
                  is greater than usize::MAX on this platform",
-                text_hdr.sh_addr
-            ))?;
+                    text_hdr.sh_addr
+                )
+            })?;
 
         let text_size = text_end - text_begin;
         let text_end_virtual = text_begin_virtual + text_size;
@@ -88,23 +103,27 @@ impl Binary {
         let mut addrs = BinaryHeap::new();
 
         for sym in elf.syms.iter().chain(elf.dynsyms.iter()) {
-            let Some(name) = elf.strtab.get_at(sym.st_name)
+            let Some(name) = elf
+                .strtab
+                .get_at(sym.st_name)
                 .or_else(|| elf.dynstrtab.get_at(sym.st_name))
             else {
                 continue;
             };
 
-            let addr = usize::try_from(sym.st_value).with_context(|| {
-                format!(
+            let addr =
+                usize::try_from(sym.st_value).with_context(|| {
+                    format!(
                     "Symbol '{}' has address {} which is greater than
                      usize::MAX on this platform",
                     name, sym.st_value
                 )
-            })?;
+                })?;
 
             if addr == 0
                 || addr < text_begin_virtual
-                || addr >= text_end_virtual {
+                || addr >= text_end_virtual
+            {
                 // addr == 0 if the symbol is defined outside of the
                 // binary.
                 //
@@ -146,10 +165,9 @@ impl Binary {
     ) -> HashMap<(Mnemonic, &'static [CpuidFeature]), usize> {
         let mut result = HashMap::new();
 
-        for (mnemonic, features) in instructions(
-            &self.text, self.bitness
-            //&self.data[self.text_begin..self.text_end], self.bitness
-        ) {
+        for (mnemonic, features) in
+            instructions(&self.text, self.bitness)
+        {
             result
                 .entry((mnemonic, features))
                 .and_modify(|counter| *counter += 1)
@@ -162,7 +180,7 @@ impl Binary {
     pub fn instruction_counts_by_symbol(
         &self,
     ) -> anyhow::Result<
-        HashMap<(&str, Mnemonic, &'static [CpuidFeature]), usize>
+        HashMap<(&str, Mnemonic, &'static [CpuidFeature]), usize>,
     > {
         anyhow::ensure!(
             !self.symbols.is_empty(),
@@ -173,10 +191,9 @@ impl Binary {
         let mut result = HashMap::new();
 
         for (name, &(begin, end)) in self.symbols.iter() {
-            for (mnemonic, features) in instructions(
-                &self.text[begin..end], self.bitness
-                //&self.data[begin..end], self.bitness
-            ) {
+            for (mnemonic, features) in
+                instructions(&self.text[begin..end], self.bitness)
+            {
                 result
                     .entry((name.as_str(), mnemonic, features))
                     .and_modify(|counter| *counter += 1)
@@ -188,7 +205,7 @@ impl Binary {
     }
 
     pub fn symbol_features(
-        &self
+        &self,
     ) -> anyhow::Result<BTreeMap<&str, Vec<CpuidFeature>>> {
         anyhow::ensure!(
             !self.symbols.is_empty(),
@@ -201,15 +218,15 @@ impl Binary {
         for (name, &(begin, end)) in self.symbols.iter() {
             let mut sym_features = HashSet::new();
 
-            for (mnemonic, features) in instructions(
-                &self.text[begin..end], self.bitness
-            ) {
+            for (mnemonic, features) in
+                instructions(&self.text[begin..end], self.bitness)
+            {
                 sym_features.extend(features);
             }
 
             result.insert(
                 name.as_str(),
-                sym_features.into_iter().collect()
+                sym_features.into_iter().collect(),
             );
         }
 
@@ -217,7 +234,7 @@ impl Binary {
     }
 
     pub fn feature_symbols(
-        &self
+        &self,
     ) -> anyhow::Result<BTreeMap<CpuidFeature, Vec<&str>>> {
         let symbol_features = self.symbol_features()?;
 
@@ -233,11 +250,11 @@ impl Binary {
             }
         }
 
-        Ok(BTreeMap::from_iter(
-            result
-                .into_iter()
-                .map(|(feature, symbols)| (feature, symbols.into_iter().collect()))
-        ))
+        Ok(BTreeMap::from_iter(result.into_iter().map(
+            |(feature, symbols)| {
+                (feature, symbols.into_iter().collect())
+            },
+        )))
     }
 }
 
@@ -254,7 +271,7 @@ fn instructions(
 
         result.push((
             instruction.op_code().mnemonic(),
-            instruction.cpuid_features()
+            instruction.cpuid_features(),
         ));
     }
 
@@ -267,6 +284,7 @@ mod test {
 
     #[test]
     fn instructions_sse() {
+        #[rustfmt::skip]
         let add_arrays_sse: &[u8] = &[
             0x0f, 0x28, 0x06,  // movaps xmm0,XMMWORD PTR [rsi]
             0x0f, 0x28, 0x0a,  // movaps xmm1,XMMWORD PTR [rdx]
@@ -289,6 +307,7 @@ mod test {
 
     #[test]
     fn instructions_avx2() {
+        #[rustfmt::skip]
         let add_arrays_avx2: &[u8] = &[
             0xc5, 0xfc, 0x77,        // vzeroall
             0xc5, 0xfc, 0x28, 0x06,  // vmovaps ymm0,YMMWORD PTR [rsi]
@@ -316,6 +335,7 @@ mod test {
 
     #[test]
     fn instructions_avx512() {
+        #[rustfmt::skip]
         let add_arrays_avx512: &[u8] = &[
             0xc5, 0xfc, 0x77,                    // vzeroall
             0x62, 0xf1, 0x7c, 0x48, 0x28, 0x06,  // vmovaps zmm0,ZMMWORD PTR [rsi]

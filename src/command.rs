@@ -15,11 +15,12 @@ pub fn print_instruction_table(
     println!("{:^16} {:^16} {:^6}", "Extension", "Opcode", "Count");
     println!("{:-^16} {:-^16} {:-^6}", "", "", "");
 
-    let rows = binary.instruction_counts().into_iter()
+    let rows = binary
+        .instruction_counts()
+        .into_iter()
         .map(|((mnemonic, features), counter)| {
-            let feature_names: Vec<_> = features.into_iter()
-                .map(lowercase)
-                .collect();
+            let feature_names: Vec<_> =
+                features.into_iter().map(lowercase).collect();
 
             ((feature_names, lowercase(mnemonic)), counter)
         })
@@ -27,10 +28,11 @@ pub fn print_instruction_table(
 
     for ((feature_names, mnemonic_name), counter) in rows {
         if !feature_filter.is_empty() {
-            let matching_feature = feature_names.iter()
-                .any(|name| feature_filter.iter().any(|pattern| {
-                    pattern.matches(name)
-                }));
+            let matching_feature = feature_names.iter().any(|name| {
+                feature_filter
+                    .iter()
+                    .any(|pattern| pattern.matches(name))
+            });
 
             if !matching_feature {
                 continue;
@@ -59,11 +61,12 @@ pub fn print_instruction_table_with_symbol(
     );
     println!("{:-^32} {:-^16} {:-^16} {:-^6}", "", "", "", "");
 
-    let rows = binary.instruction_counts_by_symbol()?.into_iter()
+    let rows = binary
+        .instruction_counts_by_symbol()?
+        .into_iter()
         .map(|((symbol, mnemonic, features), counter)| {
-            let feature_names: Vec<_> = features.into_iter()
-                .map(lowercase)
-                .collect();
+            let feature_names: Vec<_> =
+                features.into_iter().map(lowercase).collect();
 
             ((symbol, feature_names, lowercase(mnemonic)), counter)
         })
@@ -71,10 +74,11 @@ pub fn print_instruction_table_with_symbol(
 
     for ((symbol, feature_names, mnemonic_name), counter) in rows {
         if !feature_filter.is_empty() {
-            let matching_feature = feature_names.iter()
-                .any(|name| feature_filter.iter().any(|pattern| {
-                    pattern.matches(name)
-                }));
+            let matching_feature = feature_names.iter().any(|name| {
+                feature_filter
+                    .iter()
+                    .any(|pattern| pattern.matches(name))
+            });
 
             if !matching_feature {
                 continue;
@@ -82,9 +86,9 @@ pub fn print_instruction_table_with_symbol(
         }
 
         if !symbol_filter.is_empty()
-            && !symbol_filter.iter().any(|pattern| {
-                pattern.matches(symbol)
-            })
+            && !symbol_filter
+                .iter()
+                .any(|pattern| pattern.matches(symbol))
         {
             continue;
         }
@@ -110,9 +114,9 @@ pub fn print_by_feature(
         let feature_name = lowercase(feature);
 
         if !feature_filter.is_empty()
-            && !feature_filter.iter().any(|pattern| {
-                pattern.matches(&feature_name)
-            })
+            && !feature_filter
+                .iter()
+                .any(|pattern| pattern.matches(&feature_name))
         {
             continue;
         }
@@ -121,9 +125,9 @@ pub fn print_by_feature(
 
         for name in names {
             if !symbol_filter.is_empty()
-                && !symbol_filter.iter().any(|pattern| {
-                    pattern.matches(name)
-                })
+                && !symbol_filter
+                    .iter()
+                    .any(|pattern| pattern.matches(name))
             {
                 continue;
             } else if !found_first {

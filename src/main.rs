@@ -1,5 +1,5 @@
 use clap::Parser;
-use clap::{Arg, ArgGroup, Command, arg};
+use clap::{arg, Arg, ArgGroup, Command};
 use std::ffi::OsString;
 use wildmatch::WildMatch;
 
@@ -52,23 +52,29 @@ fn main() -> anyhow::Result<()> {
     let args = Args::parse();
 
     let binary = Binary::from_file(&args.binary_filename)?;
-    let feature_filter = args.feature_filter
+    let feature_filter = args
+        .feature_filter
         .map(|x| parse_filter(&x))
         .unwrap_or(Vec::new());
-    let symbol_filter = args.symbol_filter
+    let symbol_filter = args
+        .symbol_filter
         .map(|x| parse_filter(&x))
         .unwrap_or(Vec::new());
 
     match (args.instructions, args.symbols || !symbol_filter.is_empty())
     {
         (true, true) => command::print_instruction_table_with_symbol(
-            &binary, &feature_filter, &symbol_filter
+            &binary,
+            &feature_filter,
+            &symbol_filter,
         ),
-        (true, false) => command::print_instruction_table(
-            &binary, &feature_filter
-        ),
+        (true, false) => {
+            command::print_instruction_table(&binary, &feature_filter)
+        }
         (false, _) => command::print_by_feature(
-            &binary, &feature_filter, &symbol_filter
+            &binary,
+            &feature_filter,
+            &symbol_filter,
         ),
     }
 }
