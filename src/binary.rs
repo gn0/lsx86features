@@ -11,9 +11,6 @@ use std::path::Path;
 pub struct Binary {
     bitness: u32,
     text: Vec<u8>,
-    //data: Vec<u8>,
-    //text_begin: usize,
-    //text_end: usize,
     symbols: HashMap<String, (usize, usize)>,
 }
 
@@ -52,23 +49,6 @@ impl Binary {
                 "Binary does not contain a '.text' section"
             ));
         };
-
-        // XXX
-        //println!("sh_addr = {:#x}", text_hdr.sh_addr);
-        //println!("sh_offset = {:#x}", text_hdr.sh_offset);
-        //println!("sh_addralign = {:#x}", text_hdr.sh_addralign);
-
-        //print!("Bytes at sh_addr: ");
-        //for byte in (&data[(text_hdr.sh_addr as usize)..]).iter().take(16) {
-        //    print!("{byte:02x} ");
-        //}
-        //println!();
-
-        //print!("Bytes at sh_offset: ");
-        //for byte in (&data[(text_hdr.sh_offset as usize)..]).iter().take(16) {
-        //    print!("{byte:02x} ");
-        //}
-        //println!();
 
         let text_begin = usize::try_from(text_hdr.sh_offset)
             .with_context(|| format!(
@@ -151,20 +131,12 @@ impl Binary {
                 None => text_size,
             };
 
-            // XXX
-            //if name.contains("demo_rs4main") {
-            //    println!("{addr:#x} {size} {:#x} {name}", addr + size);
-            //}
-
             symbols.insert(name.to_owned(), (begin, end));
         }
 
         Ok(Binary {
             bitness,
             text: data[text_begin..text_end].to_vec(),
-            //data: data.to_vec(),
-            //text_begin,
-            //text_end,
             symbols,
         })
     }
@@ -201,17 +173,10 @@ impl Binary {
         let mut result = HashMap::new();
 
         for (name, &(begin, end)) in self.symbols.iter() {
-            //if name.contains("demo_rs4main") {
-            //    println!("! {:#x}", self.text_begin);
-            //    println!("! {begin:#x} {} {end:#x} {name}", end - begin);
-            //}
             for (mnemonic, features) in instructions(
                 &self.text[begin..end], self.bitness
                 //&self.data[begin..end], self.bitness
             ) {
-                //if name.contains("demo_rs4main") {
-                //    dbg!(mnemonic);
-                //}
                 result
                     .entry((name.as_str(), mnemonic, features))
                     .and_modify(|counter| *counter += 1)
@@ -238,7 +203,6 @@ impl Binary {
 
             for (mnemonic, features) in instructions(
                 &self.text[begin..end], self.bitness
-                //&self.data[begin..end], self.bitness
             ) {
                 sym_features.extend(features);
             }
@@ -287,18 +251,6 @@ fn instructions(
 
     while decoder.can_decode() {
         decoder.decode_out(&mut instruction);
-
-        // XXX
-        //if data.len() == 1360 {
-        //    let begin = instruction.ip() as usize;
-        //    let end = begin + instruction.len();
-        //    print!("{begin:016x} ");
-        //    for byte in &data[begin..end] {
-        //        print!("{byte:02x}");
-        //    }
-        //    println!();
-        //    dbg!(&instruction);
-        //}
 
         result.push((
             instruction.op_code().mnemonic(),
