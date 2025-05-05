@@ -32,9 +32,12 @@ int main(int argc, char *argv[]) {
     }
 
     for (size_t i = 0; i < 16; i++) {
+        float expected = x_1[i] + x_2[i];
+        char *op = result[i] == expected ? "==" : "!=";
+
         printf(
-            "result[%ld] = %.02f == %ld\n",
-            i, result[i], 2 * (i / 2) + 3
+            "result[%ld] = %.02f %s %.02f\n",
+            i, result[i], op, expected
         );
     }
 
