@@ -29,6 +29,10 @@ struct Args {
     #[arg(long, short = 'S', long_help)]
     symbol_filter: Option<String>,
 
+    /// Don't demangle symbol names.
+    #[arg(long, short = 'D', long_help)]
+    no_demangle: bool,
+
     // TODO Write the output in JSON.
     #[arg(long, short, long_help)]
     json: bool,
@@ -67,6 +71,7 @@ fn main() -> anyhow::Result<()> {
             &binary,
             &feature_filter,
             &symbol_filter,
+            !args.no_demangle,
         ),
         (true, false) => {
             command::print_instruction_table(&binary, &feature_filter)
@@ -75,6 +80,7 @@ fn main() -> anyhow::Result<()> {
             &binary,
             &feature_filter,
             &symbol_filter,
+            !args.no_demangle,
         ),
     }
 }

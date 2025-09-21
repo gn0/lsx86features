@@ -1,5 +1,7 @@
 use itertools::Itertools;
 use std::fmt::Debug;
+use symbolic_common::Name;
+use symbolic_demangle::{Demangle, DemangleOptions};
 use wildmatch::WildMatch;
 
 use crate::binary::Binary;
@@ -37,6 +39,7 @@ pub fn print_instruction_table(
         })
         .sorted()
         .collect();
+
     let width_ext =
         width("Extension", rows.iter(), |((feature_names, _), _)| {
             feature_names.join(",").len()
@@ -97,15 +100,25 @@ pub fn print_instruction_table_with_symbol(
     binary: &Binary,
     feature_filter: &[WildMatch],
     symbol_filter: &[WildMatch],
+    demangle_symbols: bool,
 ) -> anyhow::Result<()> {
+    let demangle_opts = DemangleOptions::complete();
+
     let rows: Vec<_> = binary
         .instruction_counts_by_symbol()?
         .into_iter()
         .map(|((symbol, mnemonic, features), counter)| {
+            let symbol_name: String = if demangle_symbols {
+                Name::from(symbol)
+                    .try_demangle(demangle_opts)
+                    .to_string()
+            } else {
+                symbol.to_string()
+            };
             let feature_names: Vec<_> =
                 features.into_iter().map(lowercase).collect();
 
-            ((symbol, feature_names, lowercase(mnemonic)), counter)
+            ((symbol_name, feature_names, lowercase(mnemonic)), counter)
         })
         .filter(|((_, features, _), _)| {
             feature_filter.is_empty()
@@ -123,6 +136,7 @@ pub fn print_instruction_table_with_symbol(
         })
         .sorted()
         .collect();
+
     let width_func =
         width("Function", rows.iter(), |((symbol, _, _), _)| {
             symbol.len()
@@ -181,7 +195,10 @@ pub fn print_by_feature(
     binary: &Binary,
     feature_filter: &[WildMatch],
     symbol_filter: &[WildMatch],
+    demangle_symbols: bool,
 ) -> anyhow::Result<()> {
+    let demangle_opts = DemangleOptions::complete();
+
     for (feature, names) in binary.feature_symbols()?.iter() {
         let feature_name = lowercase(feature);
 
@@ -195,11 +212,17 @@ pub fn print_by_feature(
 
         let mut found_first = false;
 
-        for name in names {
+        for &name in names {
+            let symbol_name = if demangle_symbols {
+                Name::from(name).try_demangle(demangle_opts).to_string()
+            } else {
+                name.to_string()
+            };
+
             if !symbol_filter.is_empty()
                 && !symbol_filter
                     .iter()
-                    .any(|pattern| pattern.matches(name))
+                    .any(|pattern| pattern.matches(&symbol_name))
             {
                 continue;
             } else if !found_first {
@@ -208,7 +231,7 @@ pub fn print_by_feature(
                 found_first = true;
             }
 
-            println!("- {name}");
+            println!("- {symbol_name}");
         }
 
         if found_first {
