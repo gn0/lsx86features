@@ -8,14 +8,25 @@ fn lowercase(value: impl Debug) -> String {
     format!("{value:?}").to_ascii_lowercase()
 }
 
+fn width<T>(
+    title: &str,
+    items: impl Iterator<Item = T>,
+    length: impl Fn(T) -> usize,
+) -> usize {
+    let min_width = title.len();
+
+    items
+        .map(|x| length(x))
+        .max()
+        .filter(|&x| x > min_width)
+        .unwrap_or(min_width)
+}
+
 pub fn print_instruction_table(
     binary: &Binary,
     feature_filter: &[WildMatch],
 ) -> anyhow::Result<()> {
-    println!("{:^16} {:^16} {:^6}", "Extension", "Opcode", "Count");
-    println!("{:-^16} {:-^16} {:-^6}", "", "", "");
-
-    let rows = binary
+    let rows: Vec<_> = binary
         .instruction_counts()
         .into_iter()
         .map(|((mnemonic, features), counter)| {
@@ -24,7 +35,36 @@ pub fn print_instruction_table(
 
             ((feature_names, lowercase(mnemonic)), counter)
         })
-        .sorted();
+        .sorted()
+        .collect();
+    let width_ext =
+        width("Extension", rows.iter(), |((feature_names, _), _)| {
+            feature_names.join(",").len()
+        });
+    let width_opcode =
+        width("Opcode", rows.iter(), |((_, mnemonic_name), _)| {
+            mnemonic_name.len()
+        });
+    let width_count = width("Count", rows.iter(), |(_, counter)| {
+        usize::try_from(1 + counter.ilog10())
+            .expect("usize should be at least 32 bits wide")
+    });
+
+    println!(
+        "{0:^3$} {1:^4$} {2:^5$}",
+        "Extension",
+        "Opcode",
+        "Count",
+        width_ext,
+        width_opcode,
+        width_count
+    );
+    println!(
+        "{} {} {}",
+        "-".repeat(width_ext),
+        "-".repeat(width_opcode),
+        "-".repeat(width_count)
+    );
 
     for ((feature_names, mnemonic_name), counter) in rows {
         if !feature_filter.is_empty() {
@@ -40,10 +80,13 @@ pub fn print_instruction_table(
         }
 
         println!(
-            "{:16} {:16} {:6}",
+            "{0:3$} {1:4$} {2:5$}",
             feature_names.join(","),
             mnemonic_name,
-            counter
+            counter,
+            width_ext,
+            width_opcode,
+            width_count
         );
     }
 
@@ -55,13 +98,7 @@ pub fn print_instruction_table_with_symbol(
     feature_filter: &[WildMatch],
     symbol_filter: &[WildMatch],
 ) -> anyhow::Result<()> {
-    println!(
-        "{:^32} {:^16} {:^16} {:^6}",
-        "Function", "Extension", "Opcode", "Count"
-    );
-    println!("{:-^32} {:-^16} {:-^16} {:-^6}", "", "", "", "");
-
-    let rows = binary
+    let rows: Vec<_> = binary
         .instruction_counts_by_symbol()?
         .into_iter()
         .map(|((symbol, mnemonic, features), counter)| {
@@ -70,35 +107,70 @@ pub fn print_instruction_table_with_symbol(
 
             ((symbol, feature_names, lowercase(mnemonic)), counter)
         })
-        .sorted();
+        .filter(|((_, features, _), _)| {
+            feature_filter.is_empty()
+                || features.iter().any(|name| {
+                    feature_filter
+                        .iter()
+                        .any(|pattern| pattern.matches(name))
+                })
+        })
+        .filter(|((symbol, _, _), _)| {
+            symbol_filter.is_empty()
+                || symbol_filter
+                    .iter()
+                    .any(|pattern| pattern.matches(symbol))
+        })
+        .sorted()
+        .collect();
+    let width_func =
+        width("Function", rows.iter(), |((symbol, _, _), _)| {
+            symbol.len()
+        });
+    let width_ext = width(
+        "Extension",
+        rows.iter(),
+        |((_, feature_names, _), _)| feature_names.join(",").len(),
+    );
+    let width_opcode =
+        width("Opcode", rows.iter(), |((_, _, mnemonic_name), _)| {
+            mnemonic_name.len()
+        });
+    let width_count = width("Count", rows.iter(), |(_, counter)| {
+        usize::try_from(1 + counter.ilog10())
+            .expect("usize should be at least 32 bits wide")
+    });
+
+    println!(
+        "{0:^4$} {1:^5$} {2:^6$} {3:^7$}",
+        "Function",
+        "Extension",
+        "Opcode",
+        "Count",
+        width_func,
+        width_ext,
+        width_opcode,
+        width_count
+    );
+    println!(
+        "{} {} {} {}",
+        "-".repeat(width_func),
+        "-".repeat(width_ext),
+        "-".repeat(width_opcode),
+        "-".repeat(width_count)
+    );
 
     for ((symbol, feature_names, mnemonic_name), counter) in rows {
-        if !feature_filter.is_empty() {
-            let matching_feature = feature_names.iter().any(|name| {
-                feature_filter
-                    .iter()
-                    .any(|pattern| pattern.matches(name))
-            });
-
-            if !matching_feature {
-                continue;
-            }
-        }
-
-        if !symbol_filter.is_empty()
-            && !symbol_filter
-                .iter()
-                .any(|pattern| pattern.matches(symbol))
-        {
-            continue;
-        }
-
         println!(
-            "{:32} {:16} {:16} {:6}",
+            "{0:4$} {1:5$} {2:6$} {3:7$}",
             symbol,
             feature_names.join(","),
             mnemonic_name,
-            counter
+            counter,
+            width_func,
+            width_ext,
+            width_opcode,
+            width_count
         );
     }
 

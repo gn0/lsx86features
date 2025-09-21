@@ -82,7 +82,7 @@ $ lsx86features demo-asm/demo | tail -n +3 | awk '{print $2}' | sort | uniq -c
 
 + [ ] Add support for `.dynsym` so that shared libraries can be inspected, too.
 + [ ] Implement JSON output.
-+ [ ] Resize header in the output according to maximum cell width.
++ [X] Resize header in the output according to maximum cell width.
 + [ ] Demangle symbol names for C++ and Rust.
 
 ## License
