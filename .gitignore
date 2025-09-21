@@ -1,1 +1,4 @@
 /target
+/demo-asm/*.o
+/demo-asm/demo*
+/misc

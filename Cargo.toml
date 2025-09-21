@@ -1,7 +1,17 @@
 [package]
 name = "lsx86features"
 version = "0.1.0"
+authors = ["Gábor Nyéki <gn@gabornyeki.com>"]
+description = """
+lsx86features is a command-line utility for listing the x86 extension sets used by a compiled binary, or by functions inside that binary.
+"""
 edition = "2021"
+license-file = "LICENSE"
+readme = "README.md"
+homepage = "https://github.com/gn0/lsx86features"
+repository = "https://github.com/gn0/lsx86features"
+keywords = ["utility", "tool", "x86"]
+categories = ["command-line-utilities"]
 
 [dependencies]
 anyhow = "1.0.94"
