@@ -85,3 +85,8 @@ $ lsx86features demo-asm/demo | tail -n +3 | awk '{print $2}' | sort | uniq -c
 + [ ] Resize header in the output according to maximum cell width.
 + [ ] Demangle symbol names for C++ and Rust.
 
+## License
+
+lsx86features is distributed under the GNU General Public License (GPL), version 3.
+See the file [LICENSE](./LICENSE) for more information.
+
