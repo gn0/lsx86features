@@ -4,9 +4,7 @@ use iced_x86::{
     CpuidFeature, Decoder, DecoderOptions, Instruction, Mnemonic,
 };
 use std::cmp::Reverse;
-use std::collections::{
-    BTreeMap, BTreeSet, BinaryHeap, HashMap, HashSet,
-};
+use std::collections::{BinaryHeap, HashMap};
 use std::path::Path;
 
 #[derive(Debug)]
@@ -202,59 +200,6 @@ impl Binary {
         }
 
         Ok(result)
-    }
-
-    pub fn symbol_features(
-        &self,
-    ) -> anyhow::Result<BTreeMap<&str, Vec<CpuidFeature>>> {
-        anyhow::ensure!(
-            !self.symbols.is_empty(),
-            "No symbols found in the '.text' section, the binary may \
-             have been stripped"
-        );
-
-        let mut result = BTreeMap::new();
-
-        for (name, &(begin, end)) in self.symbols.iter() {
-            let mut sym_features = HashSet::new();
-
-            for (mnemonic, features) in
-                instructions(&self.text[begin..end], self.bitness)
-            {
-                sym_features.extend(features);
-            }
-
-            result.insert(
-                name.as_str(),
-                sym_features.into_iter().collect(),
-            );
-        }
-
-        Ok(result)
-    }
-
-    pub fn feature_symbols(
-        &self,
-    ) -> anyhow::Result<BTreeMap<CpuidFeature, Vec<&str>>> {
-        let symbol_features = self.symbol_features()?;
-
-        let mut result: BTreeMap<_, BTreeSet<_>> = BTreeMap::new();
-
-        for (name, features) in symbol_features.into_iter() {
-            for feature in features {
-                if let Some(symbols) = result.get_mut(&feature) {
-                    (*symbols).insert(name);
-                } else {
-                    result.insert(feature, BTreeSet::from([name]));
-                }
-            }
-        }
-
-        Ok(BTreeMap::from_iter(result.into_iter().map(
-            |(feature, symbols)| {
-                (feature, symbols.into_iter().collect())
-            },
-        )))
     }
 }
 

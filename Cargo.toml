@@ -16,7 +16,7 @@ categories = ["command-line-utilities"]
 [dependencies]
 anyhow = "1.0.94"
 # NOTE "color" is a default feature.  Build `clap` without "color".
-clap = { version = "4.5.23", default-features = false, features = ["std", "help", "usage", "error-context", "suggestions", "derive"] }
+clap = { version = "4.5.23", default-features = false, features = ["std", "help", "usage", "error-context", "suggestions", "cargo"] }
 goblin = "0.9.2"
 iced-x86 = "1.21.0"
 itertools = "0.13.0"

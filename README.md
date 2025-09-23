@@ -84,7 +84,7 @@ $ lsx86features demo-asm/demo | tail -n +3 | awk '{print $2}' | sort | uniq -c
 + [ ] Implement JSON output.
 + [X] Resize header in the output according to maximum cell width.
 + [X] Demangle symbol names for C++ and Rust.
-+ [ ] Clean up the CLI.
++ [X] Clean up the CLI.
 
 ## License
 
