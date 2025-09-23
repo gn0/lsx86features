@@ -1,6 +1,9 @@
-use lsx86features::binary::Binary;
-use lsx86features::cli::{self, OutputFormat};
-use lsx86features::command;
+use crate::binary::Binary;
+use crate::cli::OutputFormat;
+
+mod binary;
+mod cli;
+mod command;
 
 fn main() -> anyhow::Result<()> {
     // TODO Also support symbols in `.dynsym` so that shared libraries
