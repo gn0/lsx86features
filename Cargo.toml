@@ -1,6 +1,6 @@
 [package]
 name = "lsx86features"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["Gábor Nyéki <gn@gabornyeki.com>"]
 description = """
 lsx86features is a command-line utility for listing the x86 extension sets used by a compiled binary, or by functions inside that binary.
