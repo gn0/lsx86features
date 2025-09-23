@@ -20,6 +20,8 @@ clap = { version = "4.5.23", default-features = false, features = ["std", "help"
 goblin = "0.9.2"
 iced-x86 = "1.21.0"
 itertools = "0.13.0"
+serde = { version = "1.0.226", features = ["derive", "std"] }
+serde_json = "1.0.145"
 symbolic-common = "12.16.3"
 symbolic-demangle = "12.16.3"
 wildmatch = "2.4.0"

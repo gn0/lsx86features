@@ -1,4 +1,5 @@
 use itertools::Itertools;
+use serde::Serialize;
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;
 use std::fmt::Debug;
@@ -9,26 +10,32 @@ use wildmatch::WildMatch;
 use crate::binary::Binary;
 use crate::cli::ShowSymbols;
 
-#[derive(PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Serialize, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Instruction(String);
 
-#[derive(PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Serialize, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Feature(String);
 
-#[derive(PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Serialize, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ConcatenatedFeatures(String);
 
-#[derive(PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Serialize, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Symbol(String);
 
 pub enum Features {
     Total {
-        data: BTreeMap<(ConcatenatedFeatures, Instruction), usize>,
+        data: BTreeMap<
+            ConcatenatedFeatures,
+            BTreeMap<Instruction, usize>,
+        >,
     },
     BySymbol {
         data: BTreeMap<
             Symbol,
-            BTreeMap<(ConcatenatedFeatures, Instruction), usize>,
+            BTreeMap<
+                ConcatenatedFeatures,
+                BTreeMap<Instruction, usize>,
+            >,
         >,
     },
 }
@@ -130,15 +137,17 @@ pub fn get_features(
         for ((symbol_name, feature_names, mnemonic), count) in counts {
             data.entry(symbol_name)
                 .or_insert_with(BTreeMap::new)
-                .insert((feature_names, mnemonic), count);
+                .entry(feature_names)
+                .or_insert_with(BTreeMap::new)
+                .insert(mnemonic, count);
         }
 
         Ok(Features::BySymbol { data })
     } else {
-        let data = binary
+        let counts = binary
             .instruction_counts()
             .into_iter()
-            .map(|((mnemonic, features), counter)| {
+            .map(|((mnemonic, features), count)| {
                 let feature_names: Vec<_> = features
                     .iter()
                     .map(|x| Feature(lowercase(x)))
@@ -146,7 +155,7 @@ pub fn get_features(
 
                 (
                     (Instruction(lowercase(mnemonic)), feature_names),
-                    counter,
+                    count,
                 )
             })
             .filter(|((_, features), _)| {
@@ -157,21 +166,25 @@ pub fn get_features(
                             .any(|pattern| pattern.matches(name))
                     })
             })
-            .map(|((mnemonic, features), counter)| {
+            .map(|((mnemonic, features), count)| {
                 (
-                    (
-                        ConcatenatedFeatures(
-                            features
-                                .into_iter()
-                                .map(|Feature(x)| x)
-                                .join(","),
-                        ),
-                        mnemonic,
+                    ConcatenatedFeatures(
+                        features
+                            .into_iter()
+                            .map(|Feature(x)| x)
+                            .join(","),
                     ),
-                    counter,
+                    mnemonic,
+                    count,
                 )
-            })
-            .collect();
+            });
+        let mut data = BTreeMap::new();
+
+        for (features, mnemonic, count) in counts {
+            data.entry(features)
+                .or_insert_with(BTreeMap::new)
+                .insert(mnemonic, count);
+        }
 
         Ok(Features::Total { data })
     }
@@ -181,7 +194,7 @@ pub fn print_list(features: &Features) -> anyhow::Result<()> {
     match features {
         Features::Total { data } => {
             let feature_names = BTreeSet::from_iter(data.keys().map(
-                |(ConcatenatedFeatures(features), _)| features.clone(),
+                |ConcatenatedFeatures(features)| features.clone(),
             ));
 
             for name in feature_names.iter() {
@@ -191,8 +204,9 @@ pub fn print_list(features: &Features) -> anyhow::Result<()> {
         Features::BySymbol { data } => {
             let mut feature_use = BTreeMap::new();
 
-            for (Symbol(symbol), counts) in data.iter() {
-                for (ConcatenatedFeatures(features), _) in counts.keys()
+            for (Symbol(symbol), feature_counts) in data.iter() {
+                for ConcatenatedFeatures(features) in
+                    feature_counts.keys()
                 {
                     feature_use
                         .entry(features)
@@ -221,21 +235,28 @@ pub fn print_table(features: &Features) -> anyhow::Result<()> {
         Features::Total { data } => {
             let width_ext = width(
                 "Extension",
-                data.iter(),
-                |((ConcatenatedFeatures(features), _), _)| {
-                    features.len()
-                },
+                data.keys(),
+                |ConcatenatedFeatures(features)| features.len(),
             );
-            let width_opcode = width(
-                "Opcode",
-                data.iter(),
-                |((_, Instruction(mnemonic)), _)| mnemonic.len(),
-            );
-            let width_count =
-                width("Count", data.iter(), |(_, counter)| {
-                    usize::try_from(1 + counter.ilog10())
-                        .expect("usize should be at least 32 bits wide")
+            let width_opcode =
+                width("Opcode", data.values(), |counts| {
+                    counts
+                        .keys()
+                        .map(|Instruction(mnemonic)| mnemonic.len())
+                        .max()
+                        .unwrap_or_default()
                 });
+            let width_count = width("Count", data.values(), |counts| {
+                counts
+                    .values()
+                    .map(|count| {
+                        usize::try_from(1 + count.ilog10()).expect(
+                            "usize should be at least 32 bits wide",
+                        )
+                    })
+                    .max()
+                    .unwrap_or_default()
+            });
 
             println!(
                 "{0:^3$} {1:^4$} {2:^5$}",
@@ -253,20 +274,19 @@ pub fn print_table(features: &Features) -> anyhow::Result<()> {
                 "-".repeat(width_count)
             );
 
-            for (
-                (ConcatenatedFeatures(features), Instruction(mnemonic)),
-                counter,
-            ) in data.iter()
+            for (ConcatenatedFeatures(features), counts) in data.iter()
             {
-                println!(
-                    "{0:3$} {1:4$} {2:5$}",
-                    features,
-                    mnemonic,
-                    counter,
-                    width_ext,
-                    width_opcode,
-                    width_count
-                );
+                for (Instruction(mnemonic), count) in counts.iter() {
+                    println!(
+                        "{0:3$} {1:4$} {2:5$}",
+                        features,
+                        mnemonic,
+                        count,
+                        width_ext,
+                        width_opcode,
+                        width_count
+                    );
+                }
             }
         }
         Features::BySymbol { data } => {
@@ -276,7 +296,7 @@ pub fn print_table(features: &Features) -> anyhow::Result<()> {
                 width("Extension", data.values(), |counts| {
                     counts
                         .keys()
-                        .map(|(ConcatenatedFeatures(features), _)| {
+                        .map(|ConcatenatedFeatures(features)| {
                             features.len()
                         })
                         .max()
@@ -285,9 +305,15 @@ pub fn print_table(features: &Features) -> anyhow::Result<()> {
             let width_opcode =
                 width("Opcode", data.values(), |counts| {
                     counts
-                        .keys()
-                        .map(|(_, Instruction(mnemonic))| {
-                            mnemonic.len()
+                        .values()
+                        .map(|counts| {
+                            counts
+                                .keys()
+                                .map(|Instruction(mnemonic)| {
+                                    mnemonic.len()
+                                })
+                                .max()
+                                .unwrap_or_default()
                         })
                         .max()
                         .unwrap_or_default()
@@ -295,10 +321,12 @@ pub fn print_table(features: &Features) -> anyhow::Result<()> {
             let width_count = width("Count", data.values(), |counts| {
                 counts
                     .values()
-                    .map(|counter| {
-                        usize::try_from(1 + counter.ilog10()).expect(
-                            "usize should be at least 32 bits wide",
-                        )
+                    .map(|counts| {
+                        counts.values().map(|count| {
+                            usize::try_from(1 + count.ilog10()).expect(
+                                "usize should be at least 32 bits wide",
+                            )
+                        }).max().unwrap_or_default()
                     })
                     .max()
                     .unwrap_or_default()
@@ -323,26 +351,24 @@ pub fn print_table(features: &Features) -> anyhow::Result<()> {
                 "-".repeat(width_count)
             );
 
-            for (Symbol(symbol), counts) in data.iter() {
-                for (
-                    (
-                        ConcatenatedFeatures(features),
-                        Instruction(mnemonic),
-                    ),
-                    counter,
-                ) in counts.iter()
+            for (Symbol(symbol), feature_counts) in data.iter() {
+                for (ConcatenatedFeatures(features), counts) in
+                    feature_counts.iter()
                 {
-                    println!(
-                        "{0:4$} {1:5$} {2:6$} {3:7$}",
-                        symbol,
-                        features,
-                        mnemonic,
-                        counter,
-                        width_sym,
-                        width_ext,
-                        width_opcode,
-                        width_count
-                    );
+                    for (Instruction(mnemonic), count) in counts.iter()
+                    {
+                        println!(
+                            "{0:4$} {1:5$} {2:6$} {3:7$}",
+                            symbol,
+                            features,
+                            mnemonic,
+                            count,
+                            width_sym,
+                            width_ext,
+                            width_opcode,
+                            width_count
+                        );
+                    }
                 }
             }
         }
@@ -352,8 +378,12 @@ pub fn print_table(features: &Features) -> anyhow::Result<()> {
 }
 
 pub fn print_json(features: &Features) -> anyhow::Result<()> {
-    match features {
-        Features::Total { data } => todo!(),
-        Features::BySymbol { data } => todo!(),
-    }
+    let output = match features {
+        Features::Total { data } => serde_json::to_string(data)?,
+        Features::BySymbol { data } => serde_json::to_string(data)?,
+    };
+
+    println!("{output}");
+
+    Ok(())
 }
