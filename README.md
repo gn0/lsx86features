@@ -1,6 +1,8 @@
 
 # `lsx86features`: list x86 extension sets used by a compiled binary
 
+[![ci](https://github.com/gn0/lsx86features/actions/workflows/ci.yml/badge.svg)](https://github.com/gn0/lsx86features/actions/workflows/ci.yml)
+
 This CLI tool is useful for checking whether your compiled binaries make use of certain vector instructions that are not commonly available but your CPU supports.
 It is essentially a wrapper around the [iced-x86](https://crates.io/crates/iced-x86) and [goblin](https://crates.io/crates/goblin) Rust crates.
 If you are interested in how specific functions were compiled, you can also list instruction sets for specific symbol names.
