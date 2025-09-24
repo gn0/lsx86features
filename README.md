@@ -22,69 +22,37 @@ avx512_bitalg
 avx512_vpopcntdq
 ```
 
-If you want to know whether functions in your hot path use this extension set, you can check and confirm with the following command:
+If you want to know whether functions in your hot path use this extension set, you can check and confirm with `lsx86features`:
 
-```
-$ lsx86features -si -F 'avx*' demo-asm/demo
-            Function                Extension          Opcode      Count 
--------------------------------- ---------------- ---------------- ------
-add_arrays_avx2                  avx              vaddps                1
-add_arrays_avx2                  avx              vmovaps               3
-add_arrays_avx2                  avx              vzeroall              1
-add_arrays_avx512                avx              vzeroall              1
-add_arrays_avx512                avx512f          vaddps                1
-add_arrays_avx512                avx512f          vmovaps               3
-```
+|   | for full binary | by function |
+|---|-----------------|-------------|
+| output as list | <img src="https://raw.githubusercontent.com/gn0/lsx86features/main/examples/output_l.png" width="250" alt="Output of `lsx86features -l demo-asm/demo`" /> | <img src="https://raw.githubusercontent.com/gn0/lsx86features/main/examples/output_ldF.png" width="250" alt="Output of `lsx86features -ldF 'ss*e*,avx*' demo-asm/demo`" /> |
+| output as table | <img src="https://raw.githubusercontent.com/gn0/lsx86features/main/examples/output_tF.png" width="250" alt="Output of `lsx86features -tF 'ss*e*,avx*' demo-asm/demo`" /> | <img src="https://raw.githubusercontent.com/gn0/lsx86features/main/examples/output_tdF.png" width="250" alt="Output of `lsx86features -tdF 'ss*e*,avx*' demo-asm/demo`" /> |
+| output as JSON | <img src="https://raw.githubusercontent.com/gn0/lsx86features/main/examples/output_jF.png" width="250" alt="Output of `lsx86features -jF 'ss*e*,avx*' demo-asm/demo`" /> | <img src="https://raw.githubusercontent.com/gn0/lsx86features/main/examples/output_jdF.png" width="250" alt="Output of `lsx86features -jdF 'ss*e*,avx*' demo-asm/demo`" /> |
+
+## Features
+
+| Feature | CLI option |
+|---------|------------|
+| List extension sets for each function. | `-s` or `--show-symbol` |
+| Demangle symbol names for C++, Rust, and Swift. | `-d` or `--show-demangled` |
+| Structured output as JSON. | `-j` or `--json` |
+| Filter for extension sets (with wildcard support). | `-F` or `--feature-filter <STRING>` |
+| Filter for function names (with wildcard support). | `-D` or `--demangled-symbol-filter <STRING>` |
 
 ## Installation
 
-To install `lsx86features`, run
+You can install `lsx86features` from crates.io:
 
-```
-$ cargo install --locked --git https://github.com/gn0/lsx86features.git
-```
-
-## More examples
-
-List all known instruction set extensions that are used by a compiled binary:
-
-```
-$ lsx86features demo-asm/demo | tail -n +3 | cut -f1 | uniq
-avx
-avx512f
-cet_ibt
-intel386
-intel8086
-multibytenop
-sse
-sse2
-x64
+```sh
+cargo install --locked lsx86features
 ```
 
-List instructions in a compiled binary:
+Or via this repository:
 
+```sh
+cargo install --locked --git https://github.com/gn0/lsx86features.git
 ```
-$ lsx86features demo-asm/demo | tail -n +3 | awk '{print $2}' | sort | uniq -c
-      1 add
-      1 addps
-      1 and
-      1 call
-      3 cmp
-...
-      2 test
-      2 vaddps
-      2 vmovaps
-      1 vzeroall
-      1 xor
-```
-
-## To do
-
-+ [ ] Add support for `.dynsym` so that shared libraries can be inspected, too.
-+ [X] Implement JSON output.
-+ [X] Resize header in the output according to maximum cell width.
-+ [X] Demangle symbol names for C++ and Rust.
-+ [X] Clean up the CLI.
 
 ## License
 
